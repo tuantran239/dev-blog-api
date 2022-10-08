@@ -1,0 +1,39 @@
+version: '3'
+
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - devio-api
+    ports:
+      - '5000:80'
+    container_name: nginx
+    restart: always
+  redis:
+    image: redis:alpine
+    container_name: redis
+    volumes:
+      - .docker/data/redis:/data
+    ports:
+      - '6379:6379'
+    restart: always
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: always
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    depends_on:
+      - devio-api
+    container_name: rabbitmq
+  devio-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/usr/app
+      - /usr/app/node_modules
+    container_name: devio-api
+    restart: unless-stopped

@@ -1,0 +1,6 @@
+node_modules
+.env
+Dockerfile.dev
+./src/jest/config.ts
+./.docker
+docker-compose.dev.yml

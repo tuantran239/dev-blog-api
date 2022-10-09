@@ -3,7 +3,7 @@ import { RedisKeys } from '@api/utils/keys'
 
 const { authKey } = RedisKeys
 
-export const hSetAuth = async (userId: string, field: any) =>
-  FuncHandleHSet(authKey(userId), field)
+export const hSetPost = async (postId: string, field: any) =>
+  FuncHandleHSet(authKey(postId), field)
 
-export const hGetAuth = async (userId: string) => FuncHandleHGet(authKey(userId))
+export const hGetPost = async (postId: string) => FuncHandleHGet(authKey(postId))

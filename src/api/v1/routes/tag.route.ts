@@ -1,10 +1,21 @@
 import { Router } from 'express'
-import { createTagHanlder } from '@api/controllers/tag.controller'
+import {
+  deleteTagHanlder,
+  createTagHanlder,
+  getAllTagHanlder,
+  getPostTagHanlder
+} from '@api/controllers/tag.controller'
 import { createTagSchema } from '@api/validator-schema/tag.schema'
-import { validate } from '@api/middlewares'
+import { authenticate, validate } from '@api/middlewares'
 
 const router = Router()
 
-router.post('/', createTagSchema, validate, createTagHanlder)
+router.post('/', authenticate, createTagSchema, validate, createTagHanlder)
+
+router.get('/all', getAllTagHanlder)
+
+router.get('/', getPostTagHanlder)
+
+router.delete('/:id', authenticate, deleteTagHanlder)
 
 export default router

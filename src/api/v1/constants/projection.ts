@@ -4,7 +4,7 @@ const User = {
 }
 
 const Post = {
-  all: 'title mainImage tags url author',
+  all: 'title mainImage tags url author -_id',
   one: 'title body mainImage tags url author createdAt'
 }
 

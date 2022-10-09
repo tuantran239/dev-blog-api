@@ -16,8 +16,7 @@ import { cloudinaryCons, projectionCons } from '@api/constants'
 import {
   createFollowing,
   deleteFollowing,
-  getAllFollowing,
-  getFollowing
+  getAllFollowing
 } from '@api/services/following.service'
 import {
   deleteFollower,

@@ -31,7 +31,7 @@ export const FilterSearch = ({
     }
   }
 
-  options = Object.assign(options, { limit: 100 })
+  options = Object.assign(options, { limit: 50 })
 
   return { filters, options }
 }

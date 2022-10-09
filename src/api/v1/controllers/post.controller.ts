@@ -10,18 +10,17 @@ import {
   deletePost,
   getAllPost,
   getPost,
-  getPostExist,
   updatePost
 } from '@api/services/post.service'
 import { HttpResponse } from '@api/utils'
 import { FilterPosts } from '@api/utils/filter'
 import { serverConf } from '@config'
-import { createLike, deleteLike, getLike } from '@api/services/like.service'
+import { createLike, deleteLike } from '@api/services/like.service'
 import {
   createBookmark,
-  deleteBookmark,
-  getBookmark
+  deleteBookmark
 } from '@api/services/bookmark.service'
+import { hGetPost, hSetPost } from '@api/services/redis.service'
 
 export const createPostHanlder = async (req: Request, res: Response) => {
   const user = res.locals.user
@@ -39,39 +38,40 @@ export const createPostHanlder = async (req: Request, res: Response) => {
 export const getAllPostHanlder = async (req: Request, res: Response) => {
   const { filters, options } = FilterPosts(req.query)
 
-  const { data: posts, error } = await getAllPost(
+  const { data: posts } = await getAllPost(
     filters,
     projectionCons.Post.all,
     Object.assign(options, {
-      populate: { path: 'author', select: 'name avatar' }
+      populate: { path: 'author', select: projectionCons.User.post }
     })
   )
-  if (error) {
-    return CommonErrorResponse(res, error)
-  }
 
   return HttpResponse(res, 200, {
     success: true,
     records: posts?.length,
-    posts
+    posts: posts || []
   })
 }
 
 export const getPostHanlder = async (req: Request, res: Response) => {
   const { id } = req.params
 
-  const { error, data: post } = await getPostExist(
-    false,
-    { _id: id },
-    projectionCons.Post.one
-  )
-  if (error) {
-    return CommonErrorResponse(res, error)
+  const postCache = await hGetPost(id)
+  if (postCache) {
+    return HttpResponse(res, 200, {
+      success: true,
+      post: postCache
+    })
+  }
+
+  const { data: post } = await getPost({ _id: id }, projectionCons.Post.one)
+  if (post) {
+    await hSetPost(id, post)
   }
 
   return HttpResponse(res, 200, {
     success: true,
-    post
+    post: post || {}
   })
 }
 
@@ -79,7 +79,7 @@ export const updatePostHanlder = async (req: Request, res: Response) => {
   const user = res.locals.user
   const { id } = req.params
 
-  const { error } = await updatePost(
+  const { error, data } = await updatePost(
     { _id: id, author: user.id },
     {
       $set: { ...req.body }
@@ -88,6 +88,7 @@ export const updatePostHanlder = async (req: Request, res: Response) => {
   if (error) {
     return CommonErrorResponse(res, error)
   }
+  await hSetPost(id, data)
 
   return HttpResponse(res, 200, {
     success: true

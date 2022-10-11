@@ -1,6 +1,7 @@
 import amqp from 'amqplib'
 import { rabbitmqConf } from '@config'
 import logger from '@api/utils/logger'
+import { rabbitmqCons } from '@api/constants'
 
 interface UploadWorker {
   productId: any
@@ -29,8 +30,11 @@ export const uploadSingleFileWorker = async (msg: UploadSingleWorker) => {
       `amqp://${rabbitmqConf.host}:${rabbitmqConf.port}`
     )
     const channel = await connection.createChannel()
-    await channel.assertQueue('upload-single')
-    await channel.sendToQueue('upload-single', Buffer.from(JSON.stringify(msg)))
+    await channel.assertQueue(rabbitmqCons.queue.UPLOAD_SINGLE)
+    await channel.sendToQueue(
+      rabbitmqCons.queue.UPLOAD_SINGLE,
+      Buffer.from(JSON.stringify(msg))
+    )
     setTimeout(() => {
       connection.close()
     }, 1000)
@@ -45,8 +49,11 @@ export const uploadMultiFileWorker = async (msg: UploadMultiWorker) => {
       `amqp://${rabbitmqConf.host}:${rabbitmqConf.port}`
     )
     const channel = await connection.createChannel()
-    await channel.assertQueue('upload-multi')
-    await channel.sendToQueue('upload-multi', Buffer.from(JSON.stringify(msg)))
+    await channel.assertQueue(rabbitmqCons.queue.UPLOAD_MULTI)
+    await channel.sendToQueue(
+      rabbitmqCons.queue.UPLOAD_MULTI,
+      Buffer.from(JSON.stringify(msg))
+    )
     setTimeout(() => {
       connection.close()
     }, 1000)

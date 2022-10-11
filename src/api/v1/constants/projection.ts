@@ -1,10 +1,10 @@
 const User = {
-  post: 'name avatar -_id',
-  all: 'name avatar -_id'
+  post: 'name avatar',
+  all: 'name avatar'
 }
 
 const Post = {
-  all: 'title mainImage tags url author -_id',
+  all: 'title mainImage tags url author',
   one: 'title body mainImage tags url author createdAt'
 }
 

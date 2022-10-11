@@ -19,6 +19,7 @@ export const createTagHanlder = async (req: Request, res: Response) => {
 }
 
 export const getAllTagHanlder = async (req: Request, res: Response) => {
+  console.log(global.socket)
   const { data: tags } = await getAllTag({})
   return HttpResponse(res, 200, { success: true, tags: tags || [] })
 }

@@ -10,7 +10,7 @@ import {
   InternalServerErrorResponse,
   generateError
 } from '@api/error/http-error'
-import { generateAvatarUrl, HttpResponse } from '@api/utils'
+import { checkType, generateAvatarUrl, HttpResponse } from '@api/utils'
 import { uploadFile } from '@api/services/upload.service'
 import { cloudinaryCons, projectionCons } from '@api/constants'
 import {
@@ -27,6 +27,8 @@ import { FilterMyLikes } from '@api/utils/filter'
 import { getAllLike } from '@api/services/like.service'
 import { FilterMyBookmarks, FilterMyFollows } from '@api/utils/filter/user'
 import { getAllBookmark } from '@api/services/bookmark.service'
+import { notificationWorker } from '@api/worker/notification-worker'
+import { NotificationType } from '@api/types/notification'
 
 export const uploadAvatarHandler = async (req: Request, res: Response) => {
   const file = req.file
@@ -100,21 +102,27 @@ export const followHandler = async (req: Request, res: Response) => {
   const user = res.locals.user
   const { userId, follow } = req.body
 
-  if (!follow) {
+  if (checkType(follow, 'boolean') && !follow) {
     const data = await Promise.all([
       createFollowing({ user: user.id, following: userId }),
       createFollower({ user: userId, follower: user.id }),
       updateUser({ _id: user.id }, { $inc: { following: 1 } }),
       updateUser({ _id: userId }, { $inc: { follower: 1 } })
     ])
-      const error = data.some((d: any) => d.error !== undefined)
-      if (error) {
-        return InternalServerErrorResponse(
-          res,
-          generateError('Error follow', 'Server')
-        )
-      }
-  } else {
+    const error = data.some((d: any) => d.error !== undefined)
+    if (error) {
+      return InternalServerErrorResponse(
+        res,
+        generateError('Error follow', 'Server')
+      )
+    }
+    await notificationWorker({
+      sender: user.id,
+      receiver: userId,
+      notificationType: NotificationType.FOLLOW,
+      message: 'follow'
+    })
+  } else if (checkType(follow, 'boolean') && follow) {
     const data = await Promise.all([
       deleteFollowing({ user: user.id, following: userId }),
       deleteFollower({ user: userId, follower: user.id }),
@@ -128,6 +136,8 @@ export const followHandler = async (req: Request, res: Response) => {
         generateError('Error follow', 'Server')
       )
     }
+  } else {
+    return BadRequestResponse(res, generateError('Type not match', 'Follow'))
   }
 
   return HttpResponse(res, 200, { success: true })

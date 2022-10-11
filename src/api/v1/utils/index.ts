@@ -16,4 +16,4 @@ export type { MailConfig } from './nodemailer'
 
 export { sendMail } from './nodemailer'
 
-export {} from './functions'
+export { checkType } from './check'

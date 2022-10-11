@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import Post from '@api/models/Post'
 import { projectionCons, serverCons } from '@api/constants'
 import {
+  BadRequestResponse,
   CommonErrorResponse,
   generateError,
   InternalServerErrorResponse
@@ -12,14 +13,11 @@ import {
   getPost,
   updatePost
 } from '@api/services/post.service'
-import { HttpResponse } from '@api/utils'
+import { checkType, HttpResponse } from '@api/utils'
 import { FilterPosts } from '@api/utils/filter'
 import { serverConf } from '@config'
 import { createLike, deleteLike } from '@api/services/like.service'
-import {
-  createBookmark,
-  deleteBookmark
-} from '@api/services/bookmark.service'
+import { createBookmark, deleteBookmark } from '@api/services/bookmark.service'
 import { hGetPost, hSetPost } from '@api/services/redis.service'
 
 export const createPostHanlder = async (req: Request, res: Response) => {
@@ -113,7 +111,7 @@ export const likePostHandler = async (req: Request, res: Response) => {
   const user = res.locals.user
   const { postId, like } = req.body
 
-  if (!like) {
+  if (checkType(like, 'boolean') && !like) {
     const data = await Promise.all([
       createLike({
         user: user.id,
@@ -135,7 +133,7 @@ export const likePostHandler = async (req: Request, res: Response) => {
         generateError('Error Like post', 'Server')
       )
     }
-  } else {
+  } else if (checkType(like, 'boolean') && like) {
     const data = await Promise.all([
       deleteLike({
         user: user.id,
@@ -158,6 +156,8 @@ export const likePostHandler = async (req: Request, res: Response) => {
         generateError('Error Like post', 'Server')
       )
     }
+  } else {
+    return BadRequestResponse(res, generateError('Type not match', 'Like'))
   }
 
   return HttpResponse(res, 200, { success: true })
@@ -188,16 +188,18 @@ export const bookmarkPostHandler = async (req: Request, res: Response) => {
   const user = res.locals.user
   const { postId, bookmark } = req.body
 
-  if (!bookmark) {
+  if (checkType(bookmark, 'boolean') && !bookmark) {
     await createBookmark({
       user: user.id,
       post: postId
     })
-  } else {
+  } else if (checkType(bookmark, 'boolean') && bookmark) {
     await deleteBookmark({
       user: user.id,
       post: postId
     })
+  } else {
+    return BadRequestResponse(res, generateError('Type not match', 'Bookmark'))
   }
 
   return HttpResponse(res, 200, { success: true })

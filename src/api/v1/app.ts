@@ -11,6 +11,8 @@ import consumer from './worker/consumer'
 import { deserializeUser, setSwagger } from './middlewares'
 import { cloudinaryConf, serverConf } from '@config'
 import { connect } from '@api/utils/redis'
+import { Server } from 'socket.io'
+import http from 'http'
 
 import './utils/passport'
 
@@ -23,6 +25,20 @@ cloudinary.v2.config({
 connect()
 
 const app = express()
+const server = http.createServer(app)
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+})
+
+io.on('connection', function (socket) {
+  console.log('connect socket io')
+  socket.on('disconnect', () => {})
+  global.socket = socket
+})
+
 app.use(
   cors({
     origin: [serverConf.clientUrl, serverConf.adminUrl],
@@ -51,4 +67,6 @@ app.use(passport.session())
 app.use(consumer)
 app.use(routes)
 
-export default app
+export { app }
+
+export default server
